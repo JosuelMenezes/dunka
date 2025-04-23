@@ -5,6 +5,7 @@
     <title>DUNKA - Sistema Comercial</title>
 
 
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- CSRF Token -->
@@ -15,7 +16,11 @@
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+
+
+   <style>
         body {
             overflow-x: hidden;
         }
@@ -93,9 +98,10 @@
         <div id="app">
             <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
                 <div class="container">
-                    <a class="navbar-brand" href="{{ url('/') }}">
-                        {{ config('app.name', 'DUNKA Sistema Comercial') }}
+                    <a class="navbar-brand fw-bold" href="http://dunka.com.br" target="_blank">
+                        <i class="fas fa-globe me-1"></i> Site Dunka
                     </a>
+
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
                         <span class="navbar-toggler-icon"></span>
                     </button>
@@ -138,19 +144,9 @@
             <a href="{{ route('produtos.index') }}" class="{{ request()->is('produtos*') ? 'active' : '' }}">📦 Produtos</a>
             <a href="{{ route('orcamentos.index') }}" class="{{ request()->is('orcamentos*') ? 'active' : '' }}">📝 Orçamentos</a>
 
-
-            <a href="{{ route('usuarios.index') }}" class="{{ request()->is('usuarios*') ? 'active' : '' }}">👤 Usuários</a>
-
-
             <a href="{{ route('agenda.index') }}" class="{{ request()->is('agenda*') ? 'active' : '' }}">📅 Agenda</a>
-            <a href="{{ route('profile') }}" class="{{ request()->is('profile') ? 'active' : '' }}">⚙️ Minha Conta</a>
-            <form method="POST" action="{{ route('logout') }}" class="mt-2">
-                @csrf
-                <button type="submit" class="btn btn-link w-100 text-start {{ request()->is('logout') ? 'active' : '' }}">
-                    🚪 Sair
-                </button>
-            </form>
-
+            <a href="{{ route('minha-conta.index')
+ }}" class="{{ request()->is('profile') ? 'active' : '' }}">⚙️ Minha Conta</a>
         </div>
 
         {{-- Conteúdo principal --}}
@@ -208,7 +204,8 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             <li>
-                                <a class="dropdown-item" href="{{ route('profile') }}">
+                                <a class="dropdown-item" href="{{ route('minha-conta.index')
+ }}">
                                     <i class="fas fa-user me-2"></i> Minha Conta
                                 </a>
                             </li>
@@ -267,6 +264,24 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
 
+
+@push('scripts')
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const togglePassword = document.querySelector(".toggle-password");
+        const passwordInput = document.getElementById("password");
+
+        togglePassword.addEventListener("click", function () {
+            const icon = this.querySelector("i");
+            const isPassword = passwordInput.type === "password";
+
+            passwordInput.type = isPassword ? "text" : "password";
+            icon.classList.toggle("fa-eye");
+            icon.classList.toggle("fa-eye-slash");
+        });
+    });
+</script>
+@endpush
 
 
 </body>

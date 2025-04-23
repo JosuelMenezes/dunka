@@ -3,10 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\MinhaContaController;
 use App\Http\Controllers\{
     IndustriaController, ProdutoController, ClienteController, VendedorController,
-    OrcamentoController, PedidoController, BuscaController, AgendaController,
-    ProfileController, DashboardController
+    OrcamentoController, PedidoController, BuscaController, AgendaController, DashboardController
+
 };
 
 /* -------------------------- PÁGINA PÚBLICA -------------------------- */
@@ -63,11 +64,11 @@ Route::middleware('auth')->group(function () {
 
     /* AGENDA / PERFIL / BUSCA */
     Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
-    Route::get('/minha-conta', [ProfileController::class, 'index'])->name('profile');
+
     Route::get('/busca', [BuscaController::class, 'index'])->name('busca.index');
 
     /* IMPORTAÇÃO DE PRODUTOS / IMAGENS – vinculado à indústria */
-    Route::prefix('/minha-conta/industrias/{id}')->group(function () {
+  Route::prefix('/minha-conta/industrias/{id}')->group(function () {
         Route::get('/produtos/importar', [IndustriaController::class, 'importarProdutos'])->name('industrias.produtos.importar');
         Route::get('/produtos/modelo', [IndustriaController::class, 'gerarModeloPlanilha'])->name('industrias.produtos.modelo');
         Route::post('/produtos/processar', [IndustriaController::class, 'processarImportacao'])->name('industrias.produtos.processar');
@@ -80,3 +81,6 @@ Route::middleware('auth')->group(function () {
 
 /* ------------------------- /home ANTIGO ----------------------------- */
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
+Route::get('/minha-conta', [MinhaContaController::class, 'index'])->name('minha-conta.index');
+Route::post('/minha-conta', [MinhaContaController::class, 'update'])->name('minha-conta.update');
