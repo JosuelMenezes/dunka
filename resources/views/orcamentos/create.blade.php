@@ -39,121 +39,240 @@
             <textarea name="observacoes" class="form-control"></textarea>
         </div>
 
-        <h5>Produtos</h5>
-        <table class="table table-bordered" id="tabela-produtos">
-            <thead class="table-light">
-                <tr>
-                    <th>Produto</th>
-                    <th>Quantidade</th>
-                    <th>Preço Unitário</th>
-                    <th>Total</th>
-                    <th>Ação</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <!-- Novos campos de condições comerciais -->
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Condições Comerciais</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label>Validade da Proposta</label>
+                        <input type="text" name="validade_proposta" class="form-control" value="15 dias a partir da data de emissão">
+                    </div>
+                    <div class="col-md-6">
+                        <label>Prazo de Entrega</label>
+                        <input type="text" name="prazo_entrega" class="form-control" value="Conforme disponibilidade">
+                    </div>
+                </div>
 
-        <button type="button" class="btn btn-sm btn-success mb-3" onclick="adicionarLinha()">+ Adicionar Produto</button>
-
-        <div class="mb-3 text-end">
-            <strong>Total do Orçamento: R$ <span id="total-geral">0.00</span></strong>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label>Condições de Pagamento</label>
+                        <input type="text" name="condicoes_pagamento" class="form-control" value="A combinar">
+                    </div>
+                    <div class="col-md-6">
+                        <label>Frete</label>
+                        <input type="text" name="frete" class="form-control" value="Por conta do cliente">
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <button type="submit" class="btn btn-primary">Salvar Orçamento</button>
-        <a href="{{ route('orcamentos.index') }}" class="btn btn-secondary">Cancelar</a>
+        <!-- Produtos -->
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Produtos</h5>
+            </div>
+            <div class="card-body">
+                <!-- Busca de produtos super simples -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label>Buscar Produto</label>
+                        <input type="text" id="filtro-produto" class="form-control" placeholder="Comece a digitar para filtrar...">
+                    </div>
+                    <div class="col-md-6">
+                        <label>Selecionar Produto</label>
+                        <select id="select-produto" class="form-control">
+                            <option value="">Selecione um produto</option>
+                            @foreach($produtos as $produto)
+                                <option value="{{ $produto->id }}" data-preco="{{ $produto->preco }}">
+                                    {{ $produto->nome }} {{ $produto->codigo ? '(Cód: '.$produto->codigo.')' : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <button type="button" id="adicionar-produto" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus"></i> Adicionar Produto
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabela de produtos do orçamento -->
+                <table class="table table-bordered" id="tabela-produtos">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Produto</th>
+                            <th width="120px">Quantidade</th>
+                            <th width="150px">Preço Unitário</th>
+                            <th width="150px">Total</th>
+                            <th width="80px">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Produtos adicionados aparecerão aqui -->
+                    </tbody>
+                </table>
+
+                <div id="sem-produtos" class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i> Nenhum produto adicionado. Selecione um produto acima e clique em "Adicionar Produto".
+                </div>
+
+                <div class="text-end mt-3">
+                    <strong>Total do Orçamento: R$ <span id="total-geral">0.00</span></strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-end mt-3">
+            <a href="{{ route('orcamentos.index') }}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save"></i> Salvar Orçamento
+            </button>
+        </div>
     </form>
 </div>
 
 <script>
-    let produtos = @json($produtos);
+    // Quando o documento estiver carregado
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elementos
+        const filtroProduto = document.getElementById('filtro-produto');
+        const selectProduto = document.getElementById('select-produto');
+        const btnAdicionar = document.getElementById('adicionar-produto');
+        const tabelaProdutos = document.querySelector('#tabela-produtos tbody');
+        const semProdutos = document.getElementById('sem-produtos');
 
-    function adicionarLinha() {
-        const tabela = document.querySelector('#tabela-produtos tbody');
-        const linha = document.createElement('tr');
+        let linhaIndex = 0;
 
-        // Produto
-        const select = document.createElement('select');
-        select.name = 'produtos[][produto_id]';
-        select.classList.add('form-control');
-        select.required = true;
-        select.innerHTML = '<option value="">Selecione</option>';
-        produtos.forEach(produto => {
-            select.innerHTML += `<option value="${produto.id}" data-preco="${produto.preco}">${produto.nome}</option>`;
+        // Filtrar o select ao digitar
+        filtroProduto.addEventListener('input', function() {
+            const termo = this.value.toLowerCase();
+
+            // Percorrer todas as opções e filtrar
+            Array.from(selectProduto.options).forEach(option => {
+                // Pular a primeira opção (placeholder)
+                if (option.value === '') return;
+
+                const texto = option.text.toLowerCase();
+                const visible = texto.includes(termo);
+
+                // Esconder/mostrar opções
+                option.style.display = visible ? '' : 'none';
+            });
+
+            // Se tiver um único resultado visível, selecioná-lo
+            const opcoesVisiveis = Array.from(selectProduto.options).filter(
+                opt => opt.value !== '' && opt.style.display !== 'none'
+            );
+
+            if (opcoesVisiveis.length === 1) {
+                opcoesVisiveis[0].selected = true;
+            }
         });
 
-        // Quantidade
-        const quantidade = document.createElement('input');
-        quantidade.type = 'number';
-        quantidade.name = 'produtos[][quantidade]';
-        quantidade.classList.add('form-control');
-        quantidade.required = true;
-        quantidade.min = 1;
-        quantidade.value = 1;
+        // Adicionar produto
+        btnAdicionar.addEventListener('click', function() {
+            if (!selectProduto.value) return;
 
-        // Preço Unitário
-        const preco = document.createElement('input');
-        preco.type = 'number';
-        preco.name = 'produtos[][preco_unitario]';
-        preco.classList.add('form-control');
-        preco.step = 0.01;
-        preco.required = true;
-        preco.value = 0;
+            adicionarProdutoSelecionado();
+        });
 
-        // Total
-        const total = document.createElement('input');
-        total.type = 'text';
-        total.classList.add('form-control', 'total-item');
-        total.readOnly = true;
-        total.value = '0.00';
+        // Função para adicionar o produto selecionado
+        function adicionarProdutoSelecionado() {
+            const selectedOption = selectProduto.options[selectProduto.selectedIndex];
+            if (!selectedOption || !selectedOption.value) return;
 
-        // Botão remover
-        const remover = document.createElement('button');
-        remover.type = 'button';
-        remover.classList.add('btn', 'btn-danger', 'btn-sm');
-        remover.innerText = 'Remover';
-        remover.onclick = () => {
-            linha.remove();
-            atualizarTotalGeral();
-        };
+            const produtoId = selectedOption.value;
+            const produtoNome = selectedOption.text;
+            const produtoPreco = selectedOption.dataset.preco || 0;
 
-        // Eventos de atualização
-        select.onchange = () => {
-            const precoSelecionado = select.selectedOptions[0].dataset.preco || 0;
-            preco.value = parseFloat(precoSelecionado).toFixed(2);
-            atualizarLinha();
-        };
+            // Criar uma nova linha
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    ${produtoNome}
+                    <input type="hidden" name="produtos[${linhaIndex}][produto_id]" value="${produtoId}">
+                </td>
+                <td>
+                    <input type="number" name="produtos[${linhaIndex}][quantidade]"
+                           class="form-control quantidade" value="1" min="1" required>
+                </td>
+                <td>
+                    <input type="number" name="produtos[${linhaIndex}][preco_unitario]"
+                           class="form-control preco" value="${parseFloat(produtoPreco).toFixed(2)}"
+                           step="0.01" required>
+                </td>
+                <td class="total">R$ ${parseFloat(produtoPreco).toFixed(2)}</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-danger btn-remover">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
 
-        quantidade.oninput = atualizarLinha;
-        preco.oninput = atualizarLinha;
+            // Adicionar evento para calcular o subtotal quando mudar quantidade/preço
+            const inputs = tr.querySelectorAll('input.quantidade, input.preco');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    const linha = this.closest('tr');
+                    const qtd = parseFloat(linha.querySelector('input.quantidade').value) || 0;
+                    const preco = parseFloat(linha.querySelector('input.preco').value) || 0;
+                    const total = qtd * preco;
 
-        function atualizarLinha() {
-            const subtotal = parseFloat(quantidade.value || 0) * parseFloat(preco.value || 0);
-            total.value = subtotal.toFixed(2);
-            atualizarTotalGeral();
+                    linha.querySelector('.total').textContent = 'R$ ' + total.toFixed(2);
+
+                    // Recalcular total geral
+                    calcularTotalGeral();
+                });
+            });
+
+            // Adicionar evento para o botão remover
+            tr.querySelector('.btn-remover').addEventListener('click', function() {
+                tr.remove();
+
+                // Atualizar visibilidade da mensagem "sem produtos"
+                const temProdutos = tabelaProdutos.querySelectorAll('tr').length > 0;
+                semProdutos.style.display = temProdutos ? 'none' : 'block';
+
+                // Recalcular total
+                calcularTotalGeral();
+            });
+
+            // Adicionar à tabela
+            tabelaProdutos.appendChild(tr);
+            linhaIndex++;
+
+            // Esconder a mensagem "sem produtos"
+            semProdutos.style.display = 'none';
+
+            // Calcular total geral
+            calcularTotalGeral();
+
+            // Limpar seleção
+            selectProduto.value = '';
+            filtroProduto.value = '';
+
+            // Mostrar todas as opções novamente
+            Array.from(selectProduto.options).forEach(option => {
+                option.style.display = '';
+            });
         }
 
-        // Monta os tds
-        const td1 = document.createElement('td'); td1.appendChild(select);
-        const td2 = document.createElement('td'); td2.appendChild(quantidade);
-        const td3 = document.createElement('td'); td3.appendChild(preco);
-        const td4 = document.createElement('td'); td4.appendChild(total);
-        const td5 = document.createElement('td'); td5.appendChild(remover);
+        // Função para calcular o total geral
+        function calcularTotalGeral() {
+            let total = 0;
 
-        linha.append(td1, td2, td3, td4, td5);
-        tabela.appendChild(linha);
+            document.querySelectorAll('#tabela-produtos tbody .total').forEach(el => {
+                const valor = parseFloat(el.textContent.replace('R$ ', '')) || 0;
+                total += valor;
+            });
 
-        // Dispara onchange para preencher preço automaticamente
-        setTimeout(() => {
-            select.dispatchEvent(new Event('change'));
-        }, 0);
-    }
+            document.getElementById('total-geral').textContent = total.toFixed(2);
+        }
 
-    function atualizarTotalGeral() {
-        let total = 0;
-        document.querySelectorAll('.total-item').forEach(input => {
-            total += parseFloat(input.value) || 0;
-        });
-        document.getElementById('total-geral').innerText = total.toFixed(2);
-    }
+        // Verificar se há produtos inicialmente
+        const temProdutos = tabelaProdutos.querySelectorAll('tr').length > 0;
+        semProdutos.style.display = temProdutos ? 'none' : 'block';
+    });
 </script>
 @endsection

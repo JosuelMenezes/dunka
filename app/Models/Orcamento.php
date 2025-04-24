@@ -6,7 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class Orcamento extends Model
 {
-    protected $fillable = ['cliente_id', 'vendedor_id', 'data', 'observacoes'];
+    protected $fillable = [
+        'cliente_id',
+        'vendedor_id',
+        'data',
+        'observacoes',
+        'validade_proposta',
+        'prazo_entrega',
+        'condicoes_pagamento',
+        'frete'
+    ];
 
     public function cliente()
     {
@@ -19,14 +28,19 @@ class Orcamento extends Model
     }
 
     public function itens()
-{
-    return $this->hasMany(OrcamentoItem::class);
-}
-    public function getTotalAttribute()
-{
-    return $this->itens->sum(function ($item) {
-        return $item->quantidade * $item->preco_unitario;
-    });
-}
+    {
+        return $this->hasMany(OrcamentoItem::class);
+    }
 
+    public function getTotalAttribute()
+    {
+        // Carregar os itens se ainda não estiverem carregados
+        if (!$this->relationLoaded('itens')) {
+            $this->load('itens');
+        }
+
+        return $this->itens->sum(function ($item) {
+            return $item->quantidade * $item->preco_unitario;
+        });
+    }
 }

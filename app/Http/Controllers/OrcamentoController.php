@@ -8,17 +8,17 @@ use App\Models\Vendedor;
 use App\Models\Orcamento;
 use App\Models\OrcamentoItem;
 use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf; // no topo do controller
+use App\Models\Configuracao;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class OrcamentoController extends Controller
 {
     public function index()
-{
-    $orcamentos = \App\Models\Orcamento::with(['cliente', 'vendedor'])->latest()->get();
-    return view('orcamentos.index', compact('orcamentos'));
-}
-
+    {
+        $orcamentos = Orcamento::with(['cliente', 'vendedor', 'itens'])->latest()->get();
+        return view('orcamentos.index', compact('orcamentos'));
+    }
 
 
     public function create()
@@ -43,6 +43,10 @@ public function store(Request $request)
         'cliente_id' => 'required|exists:clientes,id',
         'vendedor_id' => 'required|exists:vendedors,id',
         'data' => 'required|date',
+        'validade_proposta' => 'nullable|string',
+        'prazo_entrega' => 'nullable|string',
+        'condicoes_pagamento' => 'nullable|string',
+        'frete' => 'nullable|string',
     ]);
 
     // Criar o orçamento principal
@@ -51,6 +55,10 @@ public function store(Request $request)
     $orcamento->vendedor_id = $request->vendedor_id;
     $orcamento->data = $request->data;
     $orcamento->observacoes = $request->observacoes;
+    $orcamento->validade_proposta = $request->validade_proposta;
+    $orcamento->prazo_entrega = $request->prazo_entrega;
+    $orcamento->condicoes_pagamento = $request->condicoes_pagamento;
+    $orcamento->frete = $request->frete;
     $orcamento->save();
 
     // Verificar se temos produtos e se estão no formato correto
@@ -79,6 +87,10 @@ public function update(Request $request, $id)
         'vendedor_id' => 'required|exists:vendedors,id',
         'data' => 'required|date',
         'observacoes' => 'nullable|string',
+        'validade_proposta' => 'nullable|string',
+        'prazo_entrega' => 'nullable|string',
+        'condicoes_pagamento' => 'nullable|string',
+        'frete' => 'nullable|string',
         'produtos.*.produto_id' => 'required|exists:produtos,id',
         'produtos.*.quantidade' => 'required|integer|min:1',
         'produtos.*.preco_unitario' => 'required|numeric|min:0',
@@ -90,6 +102,10 @@ public function update(Request $request, $id)
         'vendedor_id' => $request->vendedor_id,
         'data' => $request->data,
         'observacoes' => $request->observacoes,
+        'validade_proposta' => $request->validade_proposta,
+        'prazo_entrega' => $request->prazo_entrega,
+        'condicoes_pagamento' => $request->condicoes_pagamento,
+        'frete' => $request->frete,
     ]);
 
     // Apaga os itens antigos e adiciona os novos
@@ -128,15 +144,30 @@ public function destroy($id)
 }
 
 
-    public function downloadPdf($id)
+public function downloadPdf($id)
 {
     $orcamento = Orcamento::with(['cliente', 'vendedor', 'itens.produto'])->findOrFail($id);
 
-    $pdf = Pdf::loadView('orcamentos.pdf', compact('orcamento'));
+    // Tentar buscar a configuração da empresa, mas não falhar se não existir
+    try {
+        $empresa = \App\Models\Configuracao::first();
+    } catch (\Exception $e) {
+        // Criar um objeto temporário caso o modelo não exista ou a tabela não exista
+        $empresa = (object)[
+            'nome_fantasia' => 'DUNKA Sistemas Comerciais',
+            'cnpj' => '',
+            'ie' => '',
+            'telefone' => '',
+            'email' => '',
+            'endereco' => '',
+            'logomarca' => null
+        ];
+    }
+
+    $pdf = Pdf::loadView('orcamentos.pdf', compact('orcamento', 'empresa'));
 
     return $pdf->download('orcamento_' . $orcamento->id . '.pdf');
 }
-
 }
 
 
