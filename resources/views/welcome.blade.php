@@ -14,7 +14,7 @@
 <body>
 
     <div class="header">
-        <img src="{{ route('logomarcas.img', ['file' => 'dunka.png']) }}"
+        <img src="{{ route('logomarcas.img', ['file' => 'dunka2png']) }}"
              alt="Logomarca Dunka"
              class="logo mb-3"
              style="max-height: 280px; width: auto; object-fit: contain;">
