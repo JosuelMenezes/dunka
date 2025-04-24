@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MinhaContaController;
 use App\Http\Controllers\{
@@ -84,3 +85,22 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 
 Route::get('/minha-conta', [MinhaContaController::class, 'index'])->name('minha-conta.index');
 Route::post('/minha-conta', [MinhaContaController::class, 'update'])->name('minha-conta.update');
+
+Route::post('pedidos/{pedido}/duplicar', [PedidoController::class, 'duplicar'])
+     ->name('pedidos.duplicar');
+
+// Rota para PDFs de catálogos
+Route::get('catalogos/{file}', function ($file) {
+    $path = storage_path("app/public/catalogos/{$file}");
+
+    if (!file_exists($path)) abort(404);
+    return response()->file($path);
+})->where('file', '.*')->name('catalogos.pdf');
+
+// Rota para imagens de logomarcas
+Route::get('logomarcas/{file}', function ($file) {
+    $path = storage_path("app/public/logomarcas/{$file}");
+
+    if (!file_exists($path)) abort(404);
+    return response()->file($path);
+})->where('file', '.*')->name('logomarcas.img');
